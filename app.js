@@ -35,7 +35,7 @@ const PLAN = window.TCP_PLAN || {days:[], ranking:[], traps:[]};
 
 // ---------- store ----------
 const KEY = 'tcp.trainer.v1';
-const DEFAULT_SETTINGS = {examDate:'2026-10-29', setSize:25, timer:true, secPerQ:90, apiKey:'', appPin:'', model:'claude-sonnet-5-5', effort:'medium', includeCheatSheet:true, recall:false, shuffleChoices:false};
+const DEFAULT_SETTINGS = {examDate:'2026-10-29', setSize:25, timer:true, secPerQ:90, apiKey:'', workspaceId:'', appPin:'', model:'claude-sonnet-5-5', effort:'medium', includeCheatSheet:true, recall:false, shuffleChoices:false};
 const store = {
   data: null,
   load(){
@@ -666,7 +666,8 @@ function renderSettings(){
       <h3>Claude tutor</h3>
       ${host ? `<div class="notice ok">Host key active${host.pin ? ' · PIN required' : ''}. Model on the host: <span class="mono">${esc(host.model||'')}</span></div>` : ''}
       ${host && host.pin ? `<label class="field">Tutor PIN<input class="input mono" id="s-pin" type="password" value="${esc(s.appPin||'')}" placeholder="the APP_PIN set in Render" autocomplete="off"></label>` : ''}
-      ${host ? '' : `<label class="field">Anthropic API key<div class="row" style="flex-wrap:nowrap"><input class="input mono" id="s-key" type="password" value="${esc(s.apiKey)}" placeholder="sk-ant-…" autocomplete="off" spellcheck="false"><button class="btn" id="s-key-show" type="button">Show</button></div></label>`}
+      ${host ? (host.workspace===false ? `<div class="notice warn">The host key may be user-scoped (sk-ant-usr-…). If Test connection reports a workspace error, set ANTHROPIC_WORKSPACE_ID in the Render service Environment tab.</div>` : '') : `<label class="field">Anthropic API key<div class="row" style="flex-wrap:nowrap"><input class="input mono" id="s-key" type="password" value="${esc(s.apiKey)}" placeholder="sk-ant-…" autocomplete="off" spellcheck="false"><button class="btn" id="s-key-show" type="button">Show</button></div></label>
+      <label class="field">Workspace ID <span class="faint">(only for user-scoped keys, sk-ant-usr-…)</span><input class="input mono" id="s-ws" value="${esc(s.workspaceId||'')}" placeholder="wrkspc_…" autocomplete="off" spellcheck="false"></label>`}
       <div class="field-row">
         <label class="field">Model<select class="select" id="s-model">${Object.entries(models).map(([k,v])=>`<option value="${k}" ${s.model===k?'selected':''}>${v.label} (${k})</option>`).join('')}</select></label>
         <label class="field">Effort<select class="select" id="s-effort">${['low','medium','high'].map(e=>`<option ${s.effort===e?'selected':''}>${e}</option>`).join('')}</select></label>
@@ -692,6 +693,7 @@ function renderSettings(){
   const keyEl = $('#s-key'); if(keyEl){ keyEl.addEventListener('input', e => { s.apiKey = e.target.value.trim(); saveS(); });
     $('#s-key-show').addEventListener('click', e => { const i = $('#s-key'); i.type = i.type==='password' ? 'text' : 'password'; e.target.textContent = i.type==='password' ? 'Show' : 'Hide'; }); }
   const pinEl = $('#s-pin'); if(pinEl) pinEl.addEventListener('input', e => { s.appPin = e.target.value.trim(); saveS(); });
+  const wsEl = $('#s-ws'); if(wsEl) wsEl.addEventListener('input', e => { s.workspaceId = e.target.value.trim(); saveS(); });
   $('#s-model').addEventListener('change', e => { s.model = e.target.value; saveS(); });
   $('#s-effort').addEventListener('change', e => { s.effort = e.target.value; saveS(); });
   $('#s-cs').addEventListener('change', e => { s.includeCheatSheet = e.target.checked; saveS(); });

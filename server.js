@@ -11,6 +11,8 @@ const PORT = Number(process.env.PORT || 10000);
 const ROOT = __dirname;
 const API_KEY = (process.env.ANTHROPIC_API_KEY || '').trim();
 const APP_PIN = (process.env.APP_PIN || '').trim();
+// User-scoped keys (sk-ant-usr-...) must name the workspace on every request.
+const WORKSPACE_ID = (process.env.ANTHROPIC_WORKSPACE_ID || '').trim();
 const DEFAULT_MODEL = (process.env.CLAUDE_MODEL || 'claude-sonnet-5-5').trim();
 const ALLOWED_MODELS = new Set(['claude-sonnet-5-5', 'claude-opus-5-5', 'claude-haiku-5-5', DEFAULT_MODEL]);
 const API_URL = 'https://api.anthropic.com/v1/messages';
@@ -55,6 +57,7 @@ async function relay(req, res) {
   const payload = Object.assign({}, body, { model, max_tokens: Math.min(Number(body.max_tokens) || 4096, 8192) });
   const useFallback = String(req.headers['x-use-fallback'] || '') === '1' && model !== 'claude-haiku-5-5';
   const headers = { 'content-type': 'application/json', 'x-api-key': API_KEY, 'anthropic-version': API_VERSION };
+  if (WORKSPACE_ID) headers['anthropic-workspace-id'] = WORKSPACE_ID;
   if (useFallback) { headers['anthropic-beta'] = FALLBACK_BETA; payload.fallbacks = 'default'; } else { delete payload.fallbacks; }
 
   let upstream;
@@ -105,7 +108,7 @@ function serveStatic(req, res) {
 
 const server = http.createServer((req, res) => {
   const url = (req.url || '/').split('?')[0];
-  if (url === '/api/health') return send(res, 200, { ok: true, chat: !!API_KEY, pin: !!APP_PIN, model: DEFAULT_MODEL });
+  if (url === '/api/health') return send(res, 200, { ok: true, chat: !!API_KEY, pin: !!APP_PIN, workspace: !!WORKSPACE_ID, model: DEFAULT_MODEL });
   if (url === '/api/chat') {
     if (req.method !== 'POST') return send(res, 405, { error: 'POST only' });
     return relay(req, res).catch(e => send(res, 500, { error: { type: 'server', message: e.message } }));
@@ -115,5 +118,5 @@ const server = http.createServer((req, res) => {
 });
 
 server.listen(PORT, () => {
-  console.log(`TCP trainer listening on ${PORT}; chat relay ${API_KEY ? 'enabled' : 'disabled (no ANTHROPIC_API_KEY)'}; pin ${APP_PIN ? 'required' : 'off'}`);
+  console.log(`TCP trainer listening on ${PORT}; chat relay ${API_KEY ? 'enabled' : 'disabled (no ANTHROPIC_API_KEY)'}; pin ${APP_PIN ? 'required' : 'off'}; workspace header ${WORKSPACE_ID ? 'set' : 'not set'}`);
 });

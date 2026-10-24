@@ -22,7 +22,7 @@ Static site. No build step, no server, no framework. Open `index.html` or serve 
 
 1. Push this repository to GitHub.
 2. Open **[Deploy to Render](https://render.com/deploy?repo=https://github.com/zachcolpitts/tcp-decision-tree-trainer)** and sign in with GitHub. If Render cannot see the repository, choose **Configure account** and give Render access to `tcp-decision-tree-trainer`. (The same thing by hand: **New > Blueprint**, then pick the repository.) Render reads `render.yaml`.
-3. Render asks for two values: `ANTHROPIC_API_KEY` (your key) and `APP_PIN` (any short PIN, or leave it blank for no gate).
+3. Render asks for three values: `ANTHROPIC_API_KEY` (your key), `ANTHROPIC_WORKSPACE_ID` (required for a user-scoped `sk-ant-usr-…` key; the `wrkspc_…` id from the Anthropic console; blank for a workspace-scoped key), and `APP_PIN` (any short PIN, or leave it blank for no gate).
 4. Press **Apply**. A few minutes later the site is live at the `onrender.com` address Render shows. On the free plan the service sleeps after 15 idle minutes and takes about a minute to wake.
 
 ## Files

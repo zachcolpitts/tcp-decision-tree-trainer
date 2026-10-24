@@ -16,6 +16,9 @@ services:
       # Secrets: typed into Render when the Blueprint is created. Never stored in GitHub.
       - key: ANTHROPIC_API_KEY
         sync: false
+      # Required when the key is user-scoped (sk-ant-usr-...): the workspace ID (wrkspc_...) from the Anthropic console.
+      - key: ANTHROPIC_WORKSPACE_ID
+        sync: false
       # Optional. Set a short PIN so only you can use the tutor on the public URL; leave blank to skip.
       - key: APP_PIN
         sync: false

@@ -215,6 +215,7 @@ async function request(body, withFallback, signal){
     'anthropic-version': API_VERSION,
     'anthropic-dangerous-direct-browser-access':'true'
   };
+  if(s.workspaceId) headers['anthropic-workspace-id'] = s.workspaceId;
   if(withFallback){ headers['anthropic-beta'] = FALLBACK_BETA; payload.fallbacks = 'default'; }
   return fetch(API_URL, {method:'POST', headers, body: JSON.stringify(payload), signal});
 }
@@ -263,6 +264,7 @@ function describeError(status, text){
   try{ const j = JSON.parse(text); msg = (j.error && (j.error.message||j.error.type)) || text; }catch(e){ msg = text; }
   if(status===401) return server ? 'Tutor PIN missing or wrong (401). Check it in Settings.' : 'The API rejected the key (401). Check it in Settings.';
   if(status===503 && /no_key|not set/i.test(msg)) return 'This host has no Anthropic key configured yet. Set ANTHROPIC_API_KEY in Render, or add your own key in Settings.';
+  if(status===400 && /workspace/i.test(msg)) return server ? 'The host key is user-scoped and needs a workspace: set ANTHROPIC_WORKSPACE_ID in the Render service Environment tab (the wrkspc_ id from the Anthropic console).' : 'This key is user-scoped and needs a workspace: add your workspace ID (wrkspc_…) in Settings.';
   if(status===429) return 'Rate limited (429). Wait a moment and try again.';
   if(status===529 || status>=500) return 'The API is overloaded or unavailable ('+status+'). Try again shortly.';
   return 'API error '+status+': '+msg;
@@ -308,6 +310,7 @@ async function testKey(key, model){
     res = await fetch('api/chat', {method:'POST', headers, body});
   } else {
     const headers = {'content-type':'application/json','x-api-key':key,'anthropic-version':API_VERSION,'anthropic-dangerous-direct-browser-access':'true'};
+    const ws = settings().workspaceId; if(ws) headers['anthropic-workspace-id'] = ws;
     res = await fetch(API_URL, {method:'POST', headers, body});
   }
   if(!res.ok) throw new Error(describeError(res.status, await res.text()));
