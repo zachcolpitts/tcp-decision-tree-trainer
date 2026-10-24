@@ -1,0 +1,102 @@
+<!doctype html>
+<html lang="en" data-theme="dark">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>TCP Decision Tree Trainer</title>
+<meta name="description" content="Becker-style practice for the TCP CPA exam: entity transaction decision trees, MCQs, write-in problems, a miss log, and a Claude tutor.">
+<meta name="color-scheme" content="dark">
+<meta name="theme-color" content="#0a0e16">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%230f1522'/%3E%3Cpath d='M32 12v14M32 26L18 40M32 26l14 14M18 40v10M46 40v10' stroke='%238b9cff' stroke-width='5' stroke-linecap='round' fill='none'/%3E%3C/svg%3E">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<a class="skip" href="#view">Skip to content</a>
+<div class="app" id="app">
+
+  <aside class="sidebar" aria-label="Primary">
+    <a class="brand" href="#dashboard">
+      <span class="brand-mark" aria-hidden="true">
+        <svg viewBox="0 0 64 64" width="26" height="26"><path d="M32 12v14M32 26L18 40M32 26l14 14M18 40v10M46 40v10" stroke="currentColor" stroke-width="6" stroke-linecap="round" fill="none"/></svg>
+      </span>
+      <span class="brand-text"><strong>TCP Trainer</strong><small>Entity decision trees</small></span>
+    </a>
+
+    <nav class="nav" aria-label="Sections">
+      <a href="#dashboard" data-nav="dashboard"><span class="nav-ico">◉</span><span>Dashboard</span></a>
+      <a href="#trees" data-nav="trees"><span class="nav-ico">⌥</span><span>Decision Trees</span></a>
+      <a href="#practice" data-nav="practice"><span class="nav-ico">✎</span><span>Practice</span><span class="nav-badge" id="nav-practice-badge" hidden></span></a>
+      <a href="#misslog" data-nav="misslog"><span class="nav-ico">⚑</span><span>Miss Log</span><span class="nav-badge" id="nav-miss-badge" hidden></span></a>
+      <a href="#plan" data-nav="plan"><span class="nav-ico">▤</span><span>Study Plan</span></a>
+      <a href="#settings" data-nav="settings"><span class="nav-ico">⚙</span><span>Settings</span></a>
+    </nav>
+
+    <div class="sidebar-foot">
+      <div class="countdown" id="countdown">
+        <div class="countdown-num" id="countdown-num">–</div>
+        <div class="countdown-label" id="countdown-label">days to exam</div>
+      </div>
+      <button class="btn btn-ghost btn-sm w-full" id="btn-sidebar-chat" type="button">Ask Claude</button>
+    </div>
+  </aside>
+
+  <main class="main" id="main">
+    <header class="topbar">
+      <div class="crumbs" id="crumbs" aria-live="polite">Dashboard</div>
+      <div class="topbar-right">
+        <span class="chip chip-soft" id="api-status" title="Claude API status">
+          <span class="dot" id="api-dot"></span><span id="api-status-text">No API key</span>
+        </span>
+        <button class="btn btn-accent" id="btn-chat" type="button" aria-controls="chat" aria-expanded="false">
+          <span aria-hidden="true">✦</span> Ask Claude
+        </button>
+      </div>
+    </header>
+    <div class="view" id="view" tabindex="-1"></div>
+  </main>
+
+  <aside class="chat" id="chat" aria-label="Claude tutor" aria-hidden="true">
+    <header class="chat-head">
+      <div>
+        <div class="chat-title">Claude tutor</div>
+        <div class="chat-sub"><span id="chat-model-badge" class="mono">claude-sonnet-5-5</span></div>
+      </div>
+      <div class="chat-head-actions">
+        <button class="icon-btn" id="chat-clear" type="button" title="Clear conversation" aria-label="Clear conversation">↺</button>
+        <button class="icon-btn" id="chat-close" type="button" title="Close" aria-label="Close chat">✕</button>
+      </div>
+    </header>
+    <div class="chat-context" id="chat-context" hidden>
+      <span class="chat-context-label">Context</span>
+      <span class="chat-context-text" id="chat-context-text"></span>
+      <button class="icon-btn icon-btn-sm" id="chat-context-clear" type="button" aria-label="Remove question context">✕</button>
+    </div>
+    <div class="chat-messages" id="chat-messages" aria-live="polite"></div>
+    <div class="chat-quick" id="chat-quick"></div>
+    <form class="chat-form" id="chat-form">
+      <textarea id="chat-input" rows="1" placeholder="Ask about a rule, a question, or your miss log…" aria-label="Message to Claude"></textarea>
+      <button class="btn btn-accent" id="chat-send" type="submit">Send</button>
+    </form>
+  </aside>
+
+  <div class="scrim" id="scrim"></div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<script src="trees.js"></script>
+<script src="reference.js"></script>
+<script src="questions-ccorp.js"></script>
+<script src="questions-scorp.js"></script>
+<script src="questions-partnership.js"></script>
+<script src="questions-mixed.js"></script>
+<script src="becker.js"></script>
+<script src="cheatsheet.js"></script>
+<script src="plan.js"></script>
+<script src="chat.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
