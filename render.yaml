@@ -1,0 +1,23 @@
+# Render Blueprint. In Render: New > Blueprint, pick this repository, and Render
+# reads this file, asks for the secret values below, and deploys the site with the
+# tutor relay. The Anthropic key lives only in Render's environment.
+services:
+  - type: web
+    name: tcp-decision-tree-trainer
+    runtime: node
+    plan: free
+    buildCommand: echo "static site, no build step"
+    startCommand: node server.js
+    healthCheckPath: /api/health
+    autoDeploy: true
+    envVars:
+      - key: NODE_VERSION
+        value: "22"
+      # Secrets: typed into Render when the Blueprint is created. Never stored in GitHub.
+      - key: ANTHROPIC_API_KEY
+        sync: false
+      # Optional. Set a short PIN so only you can use the tutor on the public URL; leave blank to skip.
+      - key: APP_PIN
+        sync: false
+      - key: CLAUDE_MODEL
+        value: claude-sonnet-5-5

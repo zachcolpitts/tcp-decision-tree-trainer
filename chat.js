@@ -85,6 +85,19 @@ For a leading walkthrough (he has not answered yet), use the same chain with ? i
   return parts.join('\n\n');
 }
 
+// ---------- host detection ----------
+// When the site is served by server.js (Render), the host holds the API key and relays /api/chat.
+// On GitHub Pages or a plain static host there is no /api/health, so the browser uses the user's own key.
+let server = null; // {chat:true, pin:bool, model:string} when the relay is available
+async function detectServer(){
+  try{
+    const r = await fetch('api/health', {cache:'no-store'});
+    if(r.ok){ const j = await r.json(); if(j && j.chat) server = j; }
+  }catch(e){ server = null; }
+  updateBadge();
+  if(window.TCPApp && window.TCPApp.onServerDetected) window.TCPApp.onServerDetected(server);
+}
+
 // ---------- state ----------
 let state = load();
 function load(){ try{ const s = JSON.parse(localStorage.getItem(STORE_KEY)||'null'); if(s && Array.isArray(s.messages)) return s; }catch(e){} return {messages:[], context:null}; }
@@ -167,7 +180,13 @@ function status(kind, text){
 function updateBadge(){
   const s = settings();
   const badge = $('#chat-model-badge'); if(badge) badge.textContent = s.model || 'claude-sonnet-5-5';
-  if(!s.apiKey) status('off','No API key'); else status('on', (MODELS[s.model]||{}).label || s.model);
+  const label = (MODELS[s.model]||{}).label || s.model;
+  if(server){
+    if(server.pin && !s.appPin) status('busy','Tutor PIN needed');
+    else status('on', label + ' · host key');
+    return;
+  }
+  if(!s.apiKey) status('off','No API key'); else status('on', label);
 }
 
 // ---------- API ----------
@@ -184,20 +203,27 @@ function buildSystem(){
 
 async function request(body, withFallback, signal){
   const s = settings();
+  const payload = Object.assign({}, body);
+  if(server){
+    const headers = {'content-type':'application/json', 'x-use-fallback': withFallback ? '1' : '0'};
+    if(s.appPin) headers['x-app-pin'] = s.appPin;
+    return fetch('api/chat', {method:'POST', headers, body: JSON.stringify(payload), signal});
+  }
   const headers = {
     'content-type':'application/json',
     'x-api-key': s.apiKey,
     'anthropic-version': API_VERSION,
     'anthropic-dangerous-direct-browser-access':'true'
   };
-  const payload = Object.assign({}, body);
   if(withFallback){ headers['anthropic-beta'] = FALLBACK_BETA; payload.fallbacks = 'default'; }
   return fetch(API_URL, {method:'POST', headers, body: JSON.stringify(payload), signal});
 }
 
 async function send(text){
   const s = settings();
-  if(!s.apiKey){ state.messages.push({role:'error', content:'Add your Anthropic API key in Settings first. It stays in this browser and is sent only to api.anthropic.com.'}); renderMessages(); return; }
+  if(server){
+    if(server.pin && !s.appPin){ state.messages.push({role:'error', content:'This host asks for a tutor PIN. Enter it in Settings.'}); renderMessages(); return; }
+  } else if(!s.apiKey){ state.messages.push({role:'error', content:'Add your Anthropic API key in Settings first. It stays in this browser and is sent only to api.anthropic.com.'}); renderMessages(); return; }
   if(streaming) return;
   state.messages.push({role:'user', content:text});
   const history = state.messages.filter(m=>m.role==='user'||m.role==='assistant').slice(-30).map(m=>({role:m.role, content:m.content}));
@@ -235,7 +261,8 @@ async function send(text){
 function describeError(status, text){
   let msg = '';
   try{ const j = JSON.parse(text); msg = (j.error && (j.error.message||j.error.type)) || text; }catch(e){ msg = text; }
-  if(status===401) return 'The API rejected the key (401). Check it in Settings.';
+  if(status===401) return server ? 'Tutor PIN missing or wrong (401). Check it in Settings.' : 'The API rejected the key (401). Check it in Settings.';
+  if(status===503 && /no_key|not set/i.test(msg)) return 'This host has no Anthropic key configured yet. Set ANTHROPIC_API_KEY in Render, or add your own key in Settings.';
   if(status===429) return 'Rate limited (429). Wait a moment and try again.';
   if(status===529 || status>=500) return 'The API is overloaded or unavailable ('+status+'). Try again shortly.';
   return 'API error '+status+': '+msg;
@@ -274,8 +301,15 @@ async function readStream(res){
 }
 
 async function testKey(key, model){
-  const headers = {'content-type':'application/json','x-api-key':key,'anthropic-version':API_VERSION,'anthropic-dangerous-direct-browser-access':'true'};
-  const res = await fetch(API_URL, {method:'POST', headers, body: JSON.stringify({model: model||'claude-sonnet-5-5', max_tokens: 20, messages:[{role:'user', content:'Reply with the single word OK.'}]})});
+  const body = JSON.stringify({model: model||'claude-sonnet-5-5', max_tokens: 20, messages:[{role:'user', content:'Reply with the single word OK.'}]});
+  let res;
+  if(server){
+    const headers = {'content-type':'application/json'}; const pin = settings().appPin; if(pin) headers['x-app-pin'] = pin;
+    res = await fetch('api/chat', {method:'POST', headers, body});
+  } else {
+    const headers = {'content-type':'application/json','x-api-key':key,'anthropic-version':API_VERSION,'anthropic-dangerous-direct-browser-access':'true'};
+    res = await fetch(API_URL, {method:'POST', headers, body});
+  }
   if(!res.ok) throw new Error(describeError(res.status, await res.text()));
   const j = await res.json();
   return (j.content||[]).map(c=>c.text||'').join('').trim();
@@ -316,7 +350,8 @@ document.addEventListener('DOMContentLoaded', () => {
   input.addEventListener('keydown', e => { if(e.key==='Enter' && !e.shiftKey){ e.preventDefault(); form.requestSubmit(); } });
   document.addEventListener('keydown', e => { if(e.key==='Escape' && document.getElementById('app').classList.contains('chat-open')) close(); });
   renderContext(); renderMessages(); updateBadge();
+  detectServer();
 });
 
-window.TCPChat = { open, close, toggle, setContext, clearContext, clearAll, send, testKey, updateBadge, MODELS };
+window.TCPChat = { open, close, toggle, setContext, clearContext, clearAll, send, testKey, updateBadge, MODELS, server: () => server };
 })();

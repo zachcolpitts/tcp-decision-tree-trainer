@@ -13,9 +13,17 @@ Static site. No build step, no server, no framework. Open `index.html` or serve 
 - **Cheat sheet**: the six-page PDF embedded, with 2026 corrections for the figures that were 2025 amounts.
 - **Claude tutor**: a chat panel that calls the Anthropic Messages API directly from the browser with your own key (default model `claude-sonnet-5-5`). It sees the question you are on, your progress summary and the cheat sheet, and answers in the Becker explanation format.
 
-## API key
+## Two ways to run the tutor
 
-Settings, then paste an Anthropic API key. The key is stored only in your browser's localStorage and is sent only to `api.anthropic.com` (with the `anthropic-dangerous-direct-browser-access` header). It is never written to this repository. Progress exports strip the key.
+1. **GitHub Pages or any static host.** Settings, then paste an Anthropic API key. The key is stored only in your browser's localStorage and is sent only to `api.anthropic.com` (with the `anthropic-dangerous-direct-browser-access` header). It is never written to this repository. Progress exports strip the key.
+2. **Render (or any Node host).** `server.js` serves the site and relays `/api/chat` to Anthropic with the key held in the `ANTHROPIC_API_KEY` environment variable, so nothing is typed into the browser. Set `APP_PIN` to gate the relay behind a short PIN on a public URL. The page detects the relay through `/api/health` and switches automatically.
+
+## Put it online with Render
+
+1. Push this repository to GitHub.
+2. Open **[Deploy to Render](https://render.com/deploy?repo=https://github.com/zachcolpitts/tcp-decision-tree-trainer)** and sign in with GitHub. If Render cannot see the repository, choose **Configure account** and give Render access to `tcp-decision-tree-trainer`. (The same thing by hand: **New > Blueprint**, then pick the repository.) Render reads `render.yaml`.
+3. Render asks for two values: `ANTHROPIC_API_KEY` (your key) and `APP_PIN` (any short PIN, or leave it blank for no gate).
+4. Press **Apply**. A few minutes later the site is live at the `onrender.com` address Render shows. On the free plan the service sleeps after 15 idle minutes and takes about a minute to wake.
 
 ## Files
 
